@@ -1,0 +1,215 @@
+{
+  "entities": {
+    "interface": {
+      "title": "Network Interface",
+      "description": "Represents a physical or virtual network interface",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["ethernet", "wifi", "bridge", "virtual", "vlan"] },
+        "status": { "type": "string", "enum": ["up", "down"] },
+        "ipv4": { "type": "string" },
+        "mac": { "type": "string" },
+        "rx_speed": { "type": "number" },
+        "tx_speed": { "type": "number" },
+        "bridge_ports": { "type": "array" }
+      },
+      "required": ["name", "type", "status"]
+    },
+    "firewallRule": {
+      "title": "Firewall Rule",
+      "description": "A rule for filtering or forwarding traffic",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "action": { "type": "string", "enum": ["accept", "drop", "reject", "forward"] },
+        "protocol": { "type": "string", "enum": ["tcp", "udp", "icmp", "any"] },
+        "src_ip": { "type": "string" },
+        "src_port": { "type": "string" },
+        "dst_ip": { "type": "string" },
+        "dst_port": { "type": "string" },
+        "application": { "type": "string" },
+        "priority": { "type": "number" },
+        "logging": { "type": "boolean" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["name", "action", "protocol", "priority"]
+    },
+    "vpnServerConfig": {
+      "title": "VPN Server Config",
+      "description": "Primary VPN server settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "protocol": { "type": "string", "enum": ["wireguard", "openvpn"] },
+        "port": { "type": "number" },
+        "subnet": { "type": "string" },
+        "dns": { "type": "string" },
+        "keepalive": { "type": "number" },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "multiWanPolicy": {
+      "title": "Multi-WAN Policy",
+      "description": "Load balancing or failover configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "strategy": { "type": "string", "enum": ["failover", "ecmp", "pcc"] },
+        "interfaces": { "type": "array", "items": { "type": "string" } },
+        "weights": { "type": "object" },
+        "check_interval": { "type": "number" },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "hotspotInstance": {
+      "title": "Hotspot Instance",
+      "description": "A wireless or wired hotspot service",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "interface": { "type": "string" },
+        "ssid": { "type": "string" },
+        "auth_method": { "type": "string", "enum": ["voucher", "radius", "open", "oauth"] },
+        "bridge_mode": { "type": "boolean" },
+        "status": { "type": "string" }
+      }
+    },
+    "packetCapture": {
+      "title": "Packet Capture",
+      "description": "Individual packet record for analysis",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "src_ip": { "type": "string" },
+        "dst_ip": { "type": "string" },
+        "src_port": { "type": "number" },
+        "dst_port": { "type": "number" },
+        "protocol": { "type": "string" },
+        "size": { "type": "number" },
+        "flags": { "type": "string" }
+      }
+    },
+    "dhcpConfig": {
+      "title": "DHCP Server Config",
+      "description": "Settings for a local DHCP server",
+      "type": "object",
+      "properties": {
+        "interface": { "type": "string" },
+        "range_start": { "type": "string" },
+        "range_end": { "type": "string" },
+        "lease_time": { "type": "string" },
+        "dns": { "type": "array" },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "vpnConfig": {
+      "title": "VPN Configuration",
+      "description": "Settings for VPN connections",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["wireguard", "openvpn"] },
+        "server": { "type": "string" },
+        "status": { "type": "string", "enum": ["connected", "disconnected", "connecting"] },
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "user": {
+      "title": "System User",
+      "description": "User with RBAC access to the dashboard",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "operator", "viewer"] }
+      }
+    },
+    "pppoeServer": {
+      "title": "PPPoE Server",
+      "description": "Configuration for a PPPoE server instance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "interface": { "type": "string" },
+        "service_name": { "type": "string" },
+        "mtu": { "type": "number" },
+        "authentication": { "type": "string", "enum": ["pap", "chap", "mschapv2"] },
+        "address_pool": { "type": "string" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["interface", "service_name"]
+    },
+    "ipoeConfig": {
+      "title": "IPoE / DHCP Management",
+      "description": "Configuration for IPoE or DHCP client/server on an interface",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "interface": { "type": "string" },
+        "vlan_id": { "type": "number" },
+        "mode": { "type": "string", "enum": ["server", "client"] },
+        "auth_type": { "type": "string", "enum": ["none", "option82", "mac"] },
+        "address_pool": { "type": "string" },
+        "enabled": { "type": "boolean" }
+      },
+      "required": ["interface", "mode"]
+    },
+    "pppoeUser": {
+      "title": "PPPoE Subscriber",
+      "description": "Credentialed subscriber for PPPoE authentication",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "full_name": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "service_name": { "type": "string" },
+        "profile": { "type": "string" },
+        "remote_address": { "type": "string" },
+        "cid": { "type": "string" },
+        "comment": { "type": "string" },
+        "rate_limit": { "type": "string" },
+        "enabled": { "type": "boolean" },
+        "expiry_date": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["username", "password"]
+    },
+    "pppoeSession": {
+      "title": "Active PPPoE Session",
+      "description": "Live established tunnel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "remote_ip": { "type": "string" },
+        "interface": { "type": "string" },
+        "mac": { "type": "string" },
+        "uptime": { "type": "string" },
+        "rx_bytes": { "type": "number" },
+        "tx_bytes": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "interfaces": { "schema": "interface", "description": "List of network interfaces" },
+    "firewall_rules": { "schema": "firewallRule", "description": "Network security rules" },
+    "dhcp_configs": { "schema": "dhcpConfig", "description": "DHCP server settings per interface" },
+    "vpn_configs": { "schema": "vpnConfig", "description": "VPN profiles" },
+    "vpn_server_configs": { "schema": "vpnServerConfig", "description": "VPN server instances" },
+    "multi_wan_policies": { "schema": "multiWanPolicy", "description": "WAN load balancing and failover rules" },
+    "hotspot_instances": { "schema": "hotspotInstance", "description": "Active hotspot services" },
+    "packet_captures": { "schema": "packetCapture", "description": "Real-time traffic capture buffer" },
+    "system_users": { "schema": "user", "description": "RBAC user list" },
+    "pppoe_servers": { "schema": "pppoeServer", "description": "PPPoE server configurations" },
+    "ipoe_configs": { "schema": "ipoeConfig", "description": "IPoE/DHCP management configurations" },
+    "pppoe_users": { "schema": "pppoeUser", "description": "PPPoE subscriber database" },
+    "pppoe_sessions": { "schema": "pppoeSession", "description": "Real-time active sessions" }
+  }
+}

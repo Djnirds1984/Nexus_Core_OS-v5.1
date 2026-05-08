@@ -1,0 +1,164 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'anonymous');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      // For this demo, we check if the user is in the system_users collection as admin
+      // OR if they are the bootstrapped admin email
+      return isSignedIn() && (
+        (exists(/databases/$(database)/documents/system_users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/system_users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email == 'aldrincabanez9@gmail.com'
+      );
+    }
+
+    // Validation Helpers
+    function isValidPPPoE(data) {
+      return data.keys().hasAll(['service_name', 'interface', 'mtu', 'authentication', 'address_pool', 'enabled']) &&
+             data.service_name is string && data.service_name.size() > 0 && data.service_name.size() <= 64 &&
+             data.interface is string && data.interface.size() > 0 && data.interface.size() <= 32 &&
+             data.mtu is int && data.mtu >= 576 && data.mtu <= 1500 &&
+             data.authentication in ['pap', 'chap', 'mschapv2'] &&
+             data.address_pool is string && data.address_pool.size() > 0 && data.address_pool.size() <= 64 &&
+             data.enabled is bool;
+    }
+
+    function isValidIPoE(data) {
+      return data.keys().hasAll(['interface', 'mode', 'vlan_id', 'auth_type', 'address_pool', 'enabled']) &&
+             data.interface is string && data.interface.size() > 0 && data.interface.size() <= 32 &&
+             data.mode in ['server', 'client'] &&
+             data.vlan_id is int && data.vlan_id >= 1 && data.vlan_id <= 4094 &&
+             data.auth_type in ['none', 'option82', 'mac'] &&
+             data.address_pool is string && data.address_pool.size() > 0 && data.address_pool.size() <= 64 &&
+             data.enabled is bool;
+    }
+
+    function isValidPPPoEUser(data) {
+      return data.keys().hasAll(['username', 'password']) &&
+             data.username is string && data.username.size() >= 3 && data.username.size() <= 64 &&
+             data.password is string && data.password.size() >= 4 && data.password.size() <= 64 &&
+             (!('full_name' in data) || data.full_name is string) &&
+             (!('address' in data) || data.address is string) &&
+             (!('phone' in data) || data.phone is string) &&
+             (!('remote_address' in data) || data.remote_address is string) &&
+             (!('cid' in data) || data.cid is string) &&
+             (!('comment' in data) || data.comment is string) &&
+             (!('enabled' in data) || data.enabled is bool);
+    }
+
+    // Phase 4: Drafting "Fortress" Rules
+
+    // 1. Packet Captures (Demo Live Data)
+    // Allow any verified/signed-in user to read and write these for the simulation
+    match /packet_captures/{id} {
+      function isValidPacket(data) {
+        return data.keys().hasAll(['timestamp', 'src_ip', 'dst_ip', 'protocol', 'size']) &&
+               data.timestamp is string && data.timestamp.size() <= 64 &&
+               data.src_ip is string && data.src_ip.size() <= 45 &&
+               data.dst_ip is string && data.dst_ip.size() <= 45 &&
+               data.protocol is string && data.protocol.size() <= 16 &&
+               data.size is int && data.size >= 0 && data.size <= 65535;
+      }
+
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidPacket(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    // 2. System Users
+    match /system_users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == userId && incoming().role == 'viewer');
+      allow update: if isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'email']);
+    }
+
+    // 3. Infrastructure (Interfaces, DHCP, VPN, Firewall)
+    match /interfaces/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /dhcp_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /firewall_rules/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /vpn_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /vpn_server_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /multi_wan_policies/{id} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
+    }
+
+    match /hotspot_instances/{id} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
+    }
+
+    match /pppoe_servers/{id} {
+       allow read: if isSignedIn();
+       allow create: if isAdmin() && isValidPPPoE(incoming());
+       allow update: if isAdmin() && isValidPPPoE(incoming());
+       allow delete: if isAdmin();
+    }
+
+    match /ipoe_configs/{id} {
+       allow read: if isSignedIn();
+       allow create: if isAdmin() && isValidIPoE(incoming());
+       allow update: if isAdmin() && isValidIPoE(incoming());
+       allow delete: if isAdmin();
+    }
+
+    match /pppoe_users/{id} {
+       allow read: if isSignedIn();
+       allow create, update: if isAdmin() && isValidPPPoEUser(incoming());
+       allow delete: if isAdmin();
+    }
+
+    match /pppoe_sessions/{id} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
+    }
+  }
+}

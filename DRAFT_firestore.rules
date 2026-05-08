@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Primitive Definition
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'anonymous');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isAdmin() {
+      // For this demo, we check if the user is in the system_users collection as admin
+      // OR if they are the bootstrapped admin email
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/system_users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/system_users/$(request.auth.uid)).data.role == 'admin' ||
+        request.auth.token.email == 'aldrincabanez9@gmail.com'
+      );
+    }
+
+    // Phase 4: Drafting "Fortress" Rules
+
+    // 1. Packet Captures (Demo Live Data)
+    // Allow any verified/signed-in user to read and write these for the simulation
+    match /packet_captures/{id} {
+      function isValidPacket(data) {
+        return data.keys().hasAll(['timestamp', 'src_ip', 'dst_ip', 'protocol', 'size']) &&
+               data.timestamp is string && data.timestamp.size() <= 64 &&
+               data.src_ip is string && data.src_ip.size() <= 45 &&
+               data.dst_ip is string && data.dst_ip.size() <= 45 &&
+               data.protocol is string && data.protocol.size() <= 16 &&
+               data.size is int && data.size >= 0 && data.size <= 65535;
+      }
+
+      allow list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow create: if isSignedIn() && isValidPacket(incoming());
+      allow update, delete: if isAdmin();
+    }
+
+    // 2. System Users
+    match /system_users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin() || (isSignedIn() && request.auth.uid == userId && incoming().role == 'viewer');
+      allow update: if isAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'email']);
+    }
+
+    // 3. Infrastructure (Interfaces, DHCP, VPN, Firewall)
+    match /interfaces/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /dhcp_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /firewall_rules/{id} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /vpn_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /vpn_server_configs/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /multi_wan_policies/{id} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
+    }
+
+    match /hotspot_instances/{id} {
+       allow read: if isSignedIn();
+       allow write: if isAdmin();
+    }
+  }
+}

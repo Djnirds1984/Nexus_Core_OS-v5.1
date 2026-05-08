@@ -1,0 +1,6 @@
+{
+  "name": "NexusOS Router Dashboard",
+  "description": "A comprehensive network management and monitoring dashboard for x86-64 Linux routers, featuring real-time traffic analysis, firewall control, and VPN management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
