@@ -35,9 +35,10 @@ const LANGUAGES = [
   { code: 'ar', label: 'العر بية', flag: '🇸🇦' },
   { code: 'hi', label: 'हिन्दी', flag: '🇮🇳' },
   { code: 'sw', label: 'Swahili', flag: '🇰🇪' },
+  { code: 'tl', label: 'Tagalog', flag: '🇵🇭' },
 ];
 
-const CURRENCIES = ['USD', 'IDR', 'MYR', 'SAR', 'INR', 'NGN', 'KES'];
+const CURRENCIES = ['USD', 'IDR', 'MYR', 'SAR', 'INR', 'NGN', 'KES', 'PHP'];
 
 /**
  * Utility for Tailwind class merging
@@ -56,8 +57,7 @@ const MENU_ITEMS = [
   { id: 'dhcp', label: 'DHCP Pool', icon: Server, path: '/dhcp' },
   { id: 'firewall', label: 'Firewall', icon: ShieldCheck, path: '/firewall' },
   { id: 'vpn', label: 'VPN Connect', icon: Lock, path: '/vpn' },
-  { id: 'hotspot', label: 'Hotspot', icon: Wifi, path: '/hotspot' },
-  { id: 'users', label: 'Access Control', icon: ShieldCheck, path: '/users' },
+  { id: 'hotspot', label: 'Hotspot Gateway', icon: Wifi, path: '/hotspot' },
   { id: 'stats', label: 'Analysis', icon: Activity, path: '/analysis' },
   { id: 'system', label: 'System', icon: Settings, path: '/system' },
 ];

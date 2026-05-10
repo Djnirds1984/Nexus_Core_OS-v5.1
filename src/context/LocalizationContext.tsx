@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type Language = 'en' | 'id' | 'ms' | 'ar' | 'hi' | 'sw';
-export type Currency = 'USD' | 'IDR' | 'MYR' | 'SAR' | 'INR' | 'NGN' | 'KES';
+export type Language = 'en' | 'id' | 'ms' | 'ar' | 'hi' | 'sw' | 'tl';
+export type Currency = 'USD' | 'IDR' | 'MYR' | 'SAR' | 'INR' | 'NGN' | 'KES' | 'PHP';
 
 interface LocalizationState {
   language: Language;
@@ -186,6 +186,35 @@ const translations: Record<Language, Record<string, string>> = {
     clear: "Futa (Hakuna Mwisho)",
     success: "Operesheni Imefanikiwa",
     error: "Hitilafu Imekuja"
+  },
+  tl: {
+    dashboard: "Dashboard",
+    subscribers: "Mga Subscriber",
+    sessions: "Aktibong Sesyon",
+    provision: "Magdagdag",
+    search: "Maghanap ng ID/IP...",
+    username: "Username / Login",
+    password: "Password (Secret)",
+    fullName: "Buong Pangalan ng Customer",
+    address: "Address ng Instalasyon",
+    phone: "Numero ng Telepono",
+    cid: "Internal Account ID",
+    profile: "Profile ng Serbisyo",
+    limits: "Limitasyon sa Bilis",
+    expiry: "Petsa at Oras ng Pag-expire",
+    notes: "Administrative Notes",
+    commit: "I-save ang Configuration sa Core Database",
+    established: "NAKABUKAS",
+    operational: "GUMAGANA",
+    suspended: "SUPENDIDO",
+    testAuth: "Subukan ang Auth",
+    terminate: "Tapusin ang Sesyon",
+    status: "Katayuan",
+    bandwidth: "Bandwidth Profile",
+    accountNumber: "Numero ng Account",
+    clear: "I-clear (Walang Expiry)",
+    success: "Tagumpay ang Operasyon",
+    error: "May Naganap na Error"
   }
 };
 

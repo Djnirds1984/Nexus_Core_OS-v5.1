@@ -107,6 +107,14 @@ export const addVPNConfig = async (config: any) => {
   }
 };
 
+export const deleteVPNConfig = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'vpn_configs', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `vpn_configs/${id}`);
+  }
+};
+
 // Traffic Analysis
 export const subscribeToLivePackets = (callback: (packets: any[]) => void) => {
   const q = query(collection(db, 'packet_captures'), orderBy('timestamp', 'desc'), limit(50));
@@ -277,5 +285,140 @@ export const deleteIPoEConfig = async (id: string) => {
     await deleteDoc(doc(db, 'ipoe_configs', id));
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, `ipoe_configs/${id}`);
+  }
+};
+
+// Hotspot Servers
+export const subscribeToHotspotServers = (callback: (servers: any[]) => void) => {
+  return onSnapshot(collection(db, 'hotspot_servers'), (snapshot) => {
+    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  }, (error) => handleFirestoreError(error, OperationType.LIST, 'hotspot_servers'));
+};
+
+export const addHotspotServer = async (server: any) => {
+  try {
+    return await addDoc(collection(db, 'hotspot_servers'), {
+      ...server,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'hotspot_servers');
+  }
+};
+
+export const deleteHotspotServer = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'hotspot_servers', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `hotspot_servers/${id}`);
+  }
+};
+
+// Hotspot Vouchers
+export const subscribeToHotspotVouchers = (callback: (vouchers: any[]) => void) => {
+  return onSnapshot(collection(db, 'hotspot_vouchers'), (snapshot) => {
+    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  }, (error) => handleFirestoreError(error, OperationType.LIST, 'hotspot_vouchers'));
+};
+
+export const addHotspotVoucher = async (voucher: any) => {
+  try {
+    return await addDoc(collection(db, 'hotspot_vouchers'), {
+      ...voucher,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'hotspot_vouchers');
+  }
+};
+
+export const generateBatchVouchers = async (count: number, profile: string, dataLimit: number) => {
+  const vouchers = [];
+  for (let i = 0; i < count; i++) {
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    vouchers.push({
+      code,
+      password: code,
+      profile,
+      data_limit: dataLimit,
+      status: 'available',
+      createdAt: new Date().toISOString()
+    });
+  }
+  
+  // For demo simplicity, we add them individually. In production use writeBatch.
+  for (const v of vouchers) {
+    await addHotspotVoucher(v);
+  }
+};
+
+export const deleteHotspotVoucher = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'hotspot_vouchers', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `hotspot_vouchers/${id}`);
+  }
+};
+
+// Hotspot Active Sessions
+export const subscribeToHotspotActive = (callback: (active: any[]) => void) => {
+  return onSnapshot(collection(db, 'hotspot_active'), (snapshot) => {
+    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  }, (error) => handleFirestoreError(error, OperationType.LIST, 'hotspot_active'));
+};
+
+export const terminateHotspotSession = async (id: string) => {
+  try {
+    await deleteDoc(doc(db, 'hotspot_active', id));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `hotspot_active/${id}`);
+  }
+};
+
+export const simulateHotspotLogin = async (user: string, mac: string) => {
+  const session = {
+    user,
+    mac_address: mac,
+    address: `192.168.88.${Math.floor(Math.random() * 254) + 1}`,
+    uptime: '00:05:21',
+    bytes_in: Math.floor(Math.random() * 500000),
+    bytes_out: Math.floor(Math.random() * 200000),
+    login_by: 'http-chap',
+    createdAt: serverTimestamp()
+  };
+  try {
+    await addDoc(collection(db, 'hotspot_active'), session);
+  } catch (error) {
+    // silence
+  }
+};
+
+// Hotspot Portals
+export const subscribeToHotspotPortals = (callback: (portals: any[]) => void) => {
+  return onSnapshot(collection(db, 'hotspot_portals'), (snapshot) => {
+    callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  }, (error) => handleFirestoreError(error, OperationType.LIST, 'hotspot_portals'));
+};
+
+export const updateHotspotPortal = async (id: string, data: any) => {
+  try {
+    const docRef = doc(db, 'hotspot_portals', id);
+    await updateDoc(docRef, { ...data, updatedAt: serverTimestamp() });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `hotspot_portals/${id}`);
+  }
+};
+
+export const addHotspotPortal = async (portal: any) => {
+  try {
+    return await addDoc(collection(db, 'hotspot_portals'), {
+      ...portal,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, 'hotspot_portals');
   }
 };

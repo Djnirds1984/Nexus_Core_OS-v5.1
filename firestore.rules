@@ -58,6 +58,23 @@ service cloud.firestore {
              data.enabled is bool;
     }
 
+    function isValidHotspotServer(data) {
+      return data.keys().hasAll(['name', 'interface']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.interface is string && data.interface.size() > 0;
+    }
+
+    function isValidHotspotVoucher(data) {
+      return data.keys().hasAll(['code']) &&
+             data.code is string && data.code.size() > 0;
+    }
+
+    function isValidHotspotPortal(data) {
+      return data.keys().hasAll(['name', 'html']) &&
+             data.name is string && data.name.size() > 0 &&
+             data.html is string && data.html.size() <= 1048576;
+    }
+
     function isValidPPPoEUser(data) {
       return data.keys().hasAll(['username', 'password']) &&
              data.username is string && data.username.size() >= 3 && data.username.size() <= 64 &&
@@ -131,9 +148,27 @@ service cloud.firestore {
        allow write: if isAdmin();
     }
 
-    match /hotspot_instances/{id} {
+    match /hotspot_servers/{id} {
+       allow read: if isSignedIn();
+       allow create, update: if isAdmin() && isValidHotspotServer(incoming());
+       allow delete: if isAdmin();
+    }
+
+    match /hotspot_vouchers/{id} {
+       allow read: if isSignedIn();
+       allow create, update: if isAdmin() && isValidHotspotVoucher(incoming());
+       allow delete: if isAdmin();
+    }
+
+    match /hotspot_active/{id} {
        allow read: if isSignedIn();
        allow write: if isAdmin();
+    }
+
+    match /hotspot_portals/{id} {
+       allow read: if isSignedIn();
+       allow create, update: if isAdmin() && isValidHotspotPortal(incoming());
+       allow delete: if isAdmin();
     }
 
     match /pppoe_servers/{id} {
